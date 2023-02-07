@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>forfait_suivi</name>
+    <displayName><![CDATA[Forfait Suivi]]></displayName>
+    <version><![CDATA[1.0.0]]></version>
+    <description><![CDATA[Ici, vous pouvez suivre les interventions effectu&eacute;es sur ce site.]]></description>
+    <author><![CDATA[Bob]]></author>
+    <tab><![CDATA[administration]]></tab>
+    <is_configurable>0</is_configurable>
+    <need_instance>0</need_instance>
+	<limited_countries></limited_countries>
+</module>
