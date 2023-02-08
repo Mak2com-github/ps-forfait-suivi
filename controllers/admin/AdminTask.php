@@ -18,16 +18,20 @@ class AdminTaskController extends ModuleAdminController
         // Call of the parent function to use traduction
         parent::__construct();
 
-        // List of fields to display
+        $requets = Db::getInstance()->executeS('SELECT `title` FROM `ps_forfaits_lang` WHERE `id_psforfait`'); 
+        foreach ($requets as $requet) {
+        }
+        
         $this->fields_list = [
             'id_pstask' => [
                 'title' => $this->module->l('ID'),
                 'align' => 'center',
                 'class' => 'fixed-width-xs',
             ],
-            'title' => [
+            'id_psforfait' => [
                 'title' =>  $this->module->l('Forfait relié'),
-                'align' =>  'left',
+                'align' =>  'left', 
+                ['callback'] => 'getForfaitTitle()'
             ],
             'title' => [
                 'title' => $this->module->l('Nom de la tâche'),
@@ -88,14 +92,16 @@ class AdminTaskController extends ModuleAdminController
         //récupère titre des forfaits
         $results = Db::getInstance()->executeS('SELECT `id_psforfait`, `title` FROM `ps_forfaits_lang`');
 
-        //je récupère le temps spécifique du forfait 
-        $id_forfait = Db::getInstance()->executeS('SELECT `id_psforfait` FROM `ps_forfaits`');
+        // $tempsforfait = Db::getInstance()->executeS('SELECT `id_psforfait`, `total_time` FROM `ps_forfaits`');
+
+        // //je récupère le temps spécifique du forfait 
+        $id_forfait = Db::getInstance()->executeS('SELECT `total_time` FROM `ps_forfaits`');
         $timeForfait = Db::getInstance()->executeS('SELECT `total_time` FROM `ps_forfaits` WHERE `id_psforfait` = ' . (int)$id_forfait);
 
-        $totalTime = array();
-        foreach ($timeForfait as $forfait) {
-            $totalTime[] = $forfait['total_time'];
-        }
+        // $totalTime = array();
+        // foreach ($timeForfait as $forfait) {
+        //     $totalTime[] = $forfait['total_time'];
+        // }
 
         // echo json_encode($totalTime);
 
@@ -106,7 +112,7 @@ class AdminTaskController extends ModuleAdminController
             $options[] = array(
                 'id_psforfait' => $result['id_psforfait'],
                 'title' => $result['title'],
-                'name' => 'title',
+                'name' => 'title'      
             );
         }
             $this->fields_form = [
@@ -123,7 +129,7 @@ class AdminTaskController extends ModuleAdminController
                     'options' => [
                         'query' => $options,
                         'id' => 'id_psforfait',
-                        'name' => 'title'                                                                                                                                                                                                                                                                               
+                        'name' => 'title'                                                                                                                                                                                                                                                                        
                     ],
                     'name' => 'id_psforfait',
                     'required'  =>  true,
@@ -144,7 +150,8 @@ class AdminTaskController extends ModuleAdminController
                 [
                     //je l'affiche
                     'type'  =>  'datetime',
-                    'label' =>  $this->module->l('La durée ne doit pas dépasser ' . json_encode($totalTime)) ,
+                    'format' => 'HH:mm',
+                    'label' =>  $this->module->l('La durée ne doit pas dépasser ' . json_encode($id_forfait)) ,
                     'name'  =>  'total_time',
                     'required'  =>  true,
                     'autoload_rte' => true,
@@ -187,13 +194,14 @@ class AdminTaskController extends ModuleAdminController
     }
 
     public function postProcess()
-    {
+    {       
+
         if (Tools::isSubmit("addTask")) {
             $this->submitAddTask();
         }
 
         if (Tools::isSubmit("editTask")) {
-            $this->submitEditTasks();
+            $this->submitEditTasks($time);
         }
 
         if (Tools::isSubmit('deletetasks')) {
@@ -204,12 +212,34 @@ class AdminTaskController extends ModuleAdminController
 
     public function submitAddTask() {
 
-        $created_at = date('Y-m-d H:i:s');
+        $actualTime = date('Y-m-d H:i:s');
+
+        $timeForfait = Db::getInstance()->executeS('SELECT `total_time` FROM `ps_forfaits` WHERE `id_psforfait` ORDER BY `id_psforfait` DESC LIMIT 1');
+        $timeForfait = $timeForfait[0]['total_time'];
+        $tempsF = strtotime($timeForfait); 
+
+        $timeTache = $_POST['total_time'];
+        list($heureForfait, $minutesForfait) = explode(':', $timeForfait);
+        $timeForfait = ($heureForfait * 3600) + ($minutesForfait * 60);
+
+        preg_match("/\d{2}:\d{2}/", $timeTache, $matches);
+        list($heureTasks, $minutesTasks) = explode(':', $matches[0]);
+        echo $heureTasks, $minutesTasks;
+        $timeTache = ($heureTasks * 3600) + ($minutesTasks * 60);
+
+        $rest = $timeForfait - $timeTache;
+
+        $restHeure = floor($rest / 3600);
+        $restMinutes = floor(($rest % 3600) / 60);
+
+        $time = sprintf('%02d:%02d', $restHeure, $restMinutes);
+        echo "Temps restant : $time";
 
         Db::getInstance()->insert(Tasks::$definition['table'], array(
             'id_psforfait' => $_POST['id_psforfait'],
             'total_time' => $_POST['total_time'],
-            'created_at' => $created_at
+            'created_at' => $actualTime,
+            'updated_at' => $actualTime
         ));
 
         $languages = Language::getLanguages();
@@ -222,12 +252,18 @@ class AdminTaskController extends ModuleAdminController
             'title' => $_POST['title_'. $language],
             'description' => $_POST['description_'. $language],
         ));
+
+        Db::getInstance()->update(Forfaits::$definition['table'], array(
+            'total_time' => $time,
+            'updated_at' => $actualTime
+        ), 'id_psforfait = ' . (int)$_POST['id_psforfait']);
     }
 
-    public function submitEditTasks() {
+    public function submitEditTasks($time) {
         
         $updated_at = date('Y-m-d H:i:s');
 
+        
         Db::getInstance()->update(Tasks::$definition['table'], array(
             'total_time' => $_POST['total_time'],
             'updated_at' => $updated_at,
@@ -243,6 +279,8 @@ class AdminTaskController extends ModuleAdminController
             'title' => $_POST['title_'. $language],
             'description' => $_POST['description_'. $language],
         ), 'id_pstask = '. (int)$_POST['id_pstask']);
+
+
     }
 
     public function initPageHeaderToolbar()
@@ -255,7 +293,5 @@ class AdminTaskController extends ModuleAdminController
         );
         parent::initPageHeaderToolbar();
     }
-
     
 }
-
