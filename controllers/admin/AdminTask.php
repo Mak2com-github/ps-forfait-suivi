@@ -18,10 +18,6 @@ class AdminTaskController extends ModuleAdminController
         // Call of the parent function to use traduction
         parent::__construct();
 
-        $requets = Db::getInstance()->executeS('SELECT `title` FROM `ps_forfaits_lang` WHERE `id_psforfait`'); 
-        foreach ($requets as $requet) {
-        }
-        
         $this->fields_list = [
             'id_pstask' => [
                 'title' => $this->module->l('ID'),
@@ -31,7 +27,7 @@ class AdminTaskController extends ModuleAdminController
             'id_psforfait' => [
                 'title' =>  $this->module->l('Forfait relié'),
                 'align' =>  'left', 
-                ['callback'] => 'getForfaitTitle()'
+                'callback' => 'getForfaitTitle()',
             ],
             'title' => [
                 'title' => $this->module->l('Nom de la tâche'),

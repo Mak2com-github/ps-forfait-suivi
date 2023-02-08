@@ -223,4 +223,11 @@ class AdminForfaitController extends ModuleAdminController
         );
         parent::initPageHeaderToolbar();
     }
+
+    public function getForfaitTitle($id_forfait) {
+        $requets = Db::getInstance()->executeS('SELECT `title` FROM `ps_forfaits_lang` WHERE `id_psforfait`'); 
+        foreach ($requets as $requet) {
+            echo json_encode($requet);
+        }
+    } 
 }
