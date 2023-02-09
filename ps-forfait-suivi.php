@@ -24,20 +24,20 @@
 *  International Registered Trademark & Property of PrestaShop SA
 */
 
-require_once _PS_MODULE_DIR_ . '/forfait_suivi/classes/Forfaits.php';
-require_once _PS_MODULE_DIR_ . '/forfait_suivi/classes/Tasks.php';
+require_once _PS_MODULE_DIR_ . '/ps-forfait-suivi/classes/Forfaits.php';
+require_once _PS_MODULE_DIR_ . '/ps-forfait-suivi/classes/Tasks.php';
 
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class Forfait_suivi extends Module
+class Ps_Forfait_Suivi extends Module
 {   
     protected $config_form = false;
 
     public function __construct()
     {
-        $this->name = 'forfait_suivi';
+        $this->name = 'ps-forfait-suivi';
         $this->tab = 'administration';
         $this->version = '1.0.0';
         $this->author = 'Bob';

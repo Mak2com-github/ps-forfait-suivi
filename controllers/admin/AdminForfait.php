@@ -1,5 +1,5 @@
 <?php
-require_once _PS_MODULE_DIR_ . '/forfait_suivi/classes/Forfaits.php';
+require_once _PS_MODULE_DIR_ . '/ps-forfait-suivi/classes/Forfaits.php';
 
 class AdminForfaitController extends ModuleAdminController
 {

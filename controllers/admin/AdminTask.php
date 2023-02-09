@@ -1,5 +1,5 @@
 <?php
-require_once _PS_MODULE_DIR_ . '/forfait_suivi/classes/Tasks.php';
+require_once _PS_MODULE_DIR_ . '/ps-forfait-suivi/classes/Tasks.php';
 
 class AdminTaskController extends ModuleAdminController
 {
@@ -19,7 +19,7 @@ class AdminTaskController extends ModuleAdminController
 
         // Call of the parent function to use traduction
         parent::__construct();
-        require_once _PS_MODULE_DIR_ .'forfait_suivi/controllers/admin/AdminForfait.php';
+        require_once _PS_MODULE_DIR_ .'ps-forfait-suivi/controllers/admin/AdminForfait.php';
         $this->forfait_controller = new AdminForfaitController();    
 
         $this->fields_list = [
