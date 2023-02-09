@@ -3,6 +3,8 @@ require_once _PS_MODULE_DIR_ . '/forfait_suivi/classes/Tasks.php';
 
 class AdminTaskController extends ModuleAdminController
 {
+    private $forfait_controller;
+
     /*
      * Instanciation of the class
      * Define basic settings
@@ -17,6 +19,8 @@ class AdminTaskController extends ModuleAdminController
 
         // Call of the parent function to use traduction
         parent::__construct();
+        require_once _PS_MODULE_DIR_ .'forfait_suivi/controllers/admin/AdminForfait.php';
+        $this->forfait_controller = new AdminForfaitController();    
 
         $this->fields_list = [
             'id_pstask' => [
@@ -27,7 +31,7 @@ class AdminTaskController extends ModuleAdminController
             'id_psforfait' => [
                 'title' =>  $this->module->l('Forfait relié'),
                 'align' =>  'left', 
-                'callback' => 'getForfaitTitle()',
+                'callback' =>'getForfaitTitle',
             ],
             'title' => [
                 'title' => $this->module->l('Nom de la tâche'),
@@ -93,14 +97,10 @@ class AdminTaskController extends ModuleAdminController
         // //je récupère le temps spécifique du forfait 
         $id_forfait = Db::getInstance()->executeS('SELECT `total_time` FROM `ps_forfaits`');
         $timeForfait = Db::getInstance()->executeS('SELECT `total_time` FROM `ps_forfaits` WHERE `id_psforfait` = ' . (int)$id_forfait);
-
-        // $totalTime = array();
-        // foreach ($timeForfait as $forfait) {
-        //     $totalTime[] = $forfait['total_time'];
-        // }
-
-        // echo json_encode($totalTime);
-
+        if (!empty($timeForfait)) {
+            $time = explode(':', $timeForfait[0]['total_time']);
+            echo $time[0] . ':' . $time[1];
+        }
         //Sélectionne l'id et le title et utilise le titre de l'option 
         $options = array();
         
@@ -147,7 +147,7 @@ class AdminTaskController extends ModuleAdminController
                     //je l'affiche
                     'type'  =>  'datetime',
                     'format' => 'HH:mm',
-                    'label' =>  $this->module->l('La durée ne doit pas dépasser ' . json_encode($id_forfait)) ,
+                    'label' =>  $this->module->l('La durée ne doit pas dépasser ' . json_encode($id_forfait)),
                     'name'  =>  'total_time',
                     'required'  =>  true,
                     'autoload_rte' => true,
@@ -275,8 +275,6 @@ class AdminTaskController extends ModuleAdminController
             'title' => $_POST['title_'. $language],
             'description' => $_POST['description_'. $language],
         ), 'id_pstask = '. (int)$_POST['id_pstask']);
-
-
     }
 
     public function initPageHeaderToolbar()
@@ -289,5 +287,4 @@ class AdminTaskController extends ModuleAdminController
         );
         parent::initPageHeaderToolbar();
     }
-    
 }

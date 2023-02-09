@@ -10,7 +10,7 @@ class AdminForfaitController extends ModuleAdminController
     public function __construct()
     {
         $this->bootstrap = true; // Manage display in bootstrap mode
-        $this->table = Forfaits::$definition['table'];  // Object Table
+        $this->table = Forfaits::$definition['table']; // Object Table
         $this->identifier = Forfaits::$definition['primary']; // Object primary key
         $this->className = Forfaits::class; // Object class
         $this->lang = true; // Flag for language usa
@@ -23,29 +23,29 @@ class AdminForfaitController extends ModuleAdminController
             'id_psforfait' => [
                 'title' => $this->module->l('ID'),
                 'align' => 'center',
-                'class' =>  'fixed-width-xs',
+                'class' => 'fixed-width-xs',
             ],
             'title' => [
-                'title' =>  $this->module->l('Titre du forfait'),
-                'lang'  =>  true,
-                'align' =>  'left',
+                'title' => $this->module->l('Titre du forfait'),
+                'lang' => true,
+                'align' => 'left',
             ],
             'total_time' => [
-                'title' =>  $this->module->l('Temps total du forfait'),
+                'title' => $this->module->l('Temps total du forfait'),
                 'align' => 'center',
             ],
             'description' => [
-                'title' =>  $this->module->l('Description du forfait'),
-                'lang'  =>  true,
-                'align' =>  'left',
-            ],
-            'created_at' => [
-                'title' =>  $this->module->l('Date de création'),
+                'title' => $this->module->l('Description du forfait'),
+                'lang' => true,
                 'align' => 'left',
             ],
-            'updated_at' =>  [
-                'title' =>  $this->module->l('Date de modification'),
-                'align' =>  'left',
+            'created_at' => [
+                'title' => $this->module->l('Date de création'),
+                'align' => 'left',
+            ],
+            'updated_at' => [
+                'title' => $this->module->l('Date de modification'),
+                'align' => 'left',
             ]
         ];
 
@@ -54,11 +54,12 @@ class AdminForfaitController extends ModuleAdminController
         $this->addRowAction('delete');
     }
 
-    public function getFormValues() {
+    public function getFormValues()
+    {
         $fields_list;
         $idShop = $this->context->shop->id;
         $idInfo = Forfaits::getForfaitsByShop($idShop);
-        
+
         Shop::setContext(Shop::CONTEXT_SHOP, $idShop);
         $info = new Forfaits((int) $idInfo);
 
@@ -85,61 +86,67 @@ class AdminForfaitController extends ModuleAdminController
 
         $this->fields_form = [
             // Head
-            'legend'    =>  [
-                'title' =>  $this->module->l('Éditer un forfait'),
-                'icon'  =>  'icon-cog',
+            'legend' => [
+                'title' => $this->module->l('Éditer un forfait'),
+                'icon' => 'icon-cog',
                 'method' => 'post',
             ],
             // Fields
-            'input'     =>  [
+            'input' => [
                 [
-                    'type'  =>  'text', // Field type
-                    'label' =>  $this->module->l('Titre'), // Label
-                    'name'  =>  'title', // Name
-                    'class' =>  'forfait-title', // CSS Classes
-                    'size'  =>  255, // Max field length
-                    'required'  =>  true, // Required or not
-                    'empty_message' =>  $this->module->l('Renseignez le titre du forfait'),
+                    'type' => 'text',
+                    // Field type
+                    'label' => $this->module->l('Titre'),
+                    // Label
+                    'name' => 'title',
+                    // Name
+                    'class' => 'forfait-title',
+                    // CSS Classes
+                    'size' => 255,
+                    // Max field length
+                    'required' => true,
+                    // Required or not
+                    'empty_message' => $this->module->l('Renseignez le titre du forfait'),
                     'lang' => true,
-                    'hint'  =>  $this->module->l('Renseignez le titre du forfait')
+                    'hint' => $this->module->l('Renseignez le titre du forfait')
                 ],
                 [
-                    'type'  =>  'datetime',
-                    'label' =>  $this->module->l('Temps total du forfait'),
-                    'name'  =>  'total_time',
-                    'required'  =>  true,
+                    'type' => 'datetime',
+                    'label' => $this->module->l('Temps total du forfait'),
+                    'name' => 'total_time',
+                    'required' => true,
                     'autoload_rte' => true,
                 ],
                 [
-                    'type'  =>  'textarea',
-                    'label' =>  $this->module->l('Description du forfait'),
-                    'name'  =>  'description',
-                    'class' =>  'forfait-desc',
-                    'required'  =>  true,
-                    'empty_message' =>  $this->module->l('Renseignez la description du forfait'),
+                    'type' => 'textarea',
+                    'label' => $this->module->l('Description du forfait'),
+                    'name' => 'description',
+                    'class' => 'forfait-desc',
+                    'required' => true,
+                    'empty_message' => $this->module->l('Renseignez la description du forfait'),
                     'lang' => true,
                     'rows' => 10,
                     'cols' => 100,
                     'autoload_rte' => true,
-                    'hint' => $this->l('Caractères Invalides :').' <>;=#{}'
+                    'hint' => $this->l('Caractères Invalides :') . ' <>;=#{}'
                 ],
                 [
                     'type' => 'hidden',
                     'name' => 'created_at',
                     'id' => 'created_at',
-                    'required'  =>  false,
+                    'required' => false,
                 ],
                 [
                     'type' => 'hidden',
                     'name' => 'updated_at',
                     'id' => 'updated_at',
-                    'required'  =>  false,
+                    'required' => false,
                 ]
             ],
             // Submit button
             'submit' => [
                 'title' => $this->l('Save'),
-                'name'  => $submitName,
+                'name' => $submitName,
             ]
         ];
 
@@ -162,12 +169,13 @@ class AdminForfaitController extends ModuleAdminController
         }
         // If the rout contains "deleteforfaits"
         if (Tools::isSubmit('deleteforfaits')) {
-            Db::getInstance()->delete(Forfaits::$definition['table'], 'id_psforfait = '. $_GET['id_psforfait']);
-            Db::getInstance()->delete(Forfaits::$definition['table'] . '_lang', 'id_psforfait = '. $_GET['id_psforfait']);
+            Db::getInstance()->delete(Forfaits::$definition['table'], 'id_psforfait = ' . $_GET['id_psforfait']);
+            Db::getInstance()->delete(Forfaits::$definition['table'] . '_lang', 'id_psforfait = ' . $_GET['id_psforfait']);
         }
     }
 
-    public function submitAddForfait() {
+    public function submitAddForfait()
+    {
 
         $created_at = date('Y-m-d H:i:s');
         $updated_at = date('Y-m-d H:i:s');
@@ -176,7 +184,8 @@ class AdminForfaitController extends ModuleAdminController
             'total_time' => $_POST['total_time'],
             'created_at' => $created_at,
             'updated_at' => $updated_at,
-        ));
+        )
+        );
 
         $languages = Language::getLanguages();
         foreach ($languages as $lang) {
@@ -185,20 +194,22 @@ class AdminForfaitController extends ModuleAdminController
 
         Db::getInstance()->insert(Forfaits::$definition['table'] . "_lang", array(
             'id_lang' => $language,
-            'title' => $_POST['title_'. $language],
-            'description' => $_POST['description_'. $language],
-        ));
+            'title' => $_POST['title_' . $language],
+            'description' => $_POST['description_' . $language],
+        )
+        );
 
     }
 
-    public function submitEditForfaits() {
+    public function submitEditForfaits()
+    {
 
         $updated_at = date('Y-m-d H:i:s');
 
         Db::getInstance()->update(Forfaits::$definition['table'], array(
             'total_time' => $_POST['total_time'],
             'updated_at' => $updated_at,
-        ), 'id_psforfait = '. (int)$_POST['id_psforfait']);
+        ), 'id_psforfait = ' . (int) $_POST['id_psforfait']);
 
         $languages = Language::getLanguages();
         foreach ($languages as $lang) {
@@ -206,28 +217,29 @@ class AdminForfaitController extends ModuleAdminController
         }
 
         Db::getInstance()->update(Forfaits::$definition['table'] . '_lang', array(
-            'id_lang' => (int)$language,
-            'title' => $_POST['title_'.$language],
-            'description' => $_POST['description_'.$language],
-        ), 'id_psforfait = '. (int)$_POST['id_psforfait']);
-
+            'id_lang' => (int) $language,
+            'title' => $_POST['title_' . $language],
+            'description' => $_POST['description_' . $language],
+        ), 'id_psforfait = ' . (int) $_POST['id_psforfait']);
     }
 
     public function initPageHeaderToolbar()
-    {       
+    {
         // Add Button
         $this->page_header_toolbar_btn['Nouveau'] = array(
-            'href'  =>  self::$currentIndex . '&add' . $this->table . '&token=' . $this->token,
-            'desc'  =>  $this->module->l('Ajout nouveau forfait'),
-            'icon'  =>  'process-icon-new'
+            'href' => self::$currentIndex . '&add' . $this->table . '&token=' . $this->token,
+            'desc' => $this->module->l('Ajout nouveau forfait'),
+            'icon' => 'process-icon-new'
         );
         parent::initPageHeaderToolbar();
     }
+    
+    public function getForfaitTitle($id_forfait)
+    {
+        $db = Db::getInstance();
 
-    public function getForfaitTitle($id_forfait) {
-        $requets = Db::getInstance()->executeS('SELECT `title` FROM `ps_forfaits_lang` WHERE `id_psforfait`'); 
-        foreach ($requets as $requet) {
-            echo json_encode($requet);
-        }
-    } 
+        $query = 'SELECT `title` FROM `ps_forfaits_lang` WHERE `id_psforfait` = '.$id_forfait;
+        $title = $db->getValue($query);
+        return ($title);
+    }
 }
