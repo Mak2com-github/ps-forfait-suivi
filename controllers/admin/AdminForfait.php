@@ -1,5 +1,5 @@
 <?php
-require_once _PS_MODULE_DIR_ . '/ps-forfait-suivi/classes/Forfaits.php';
+require_once _PS_MODULE_DIR_ . '/ps_forfait_suivi/classes/Forfaits.php';
 
 class AdminForfaitController extends ModuleAdminController
 {
@@ -127,8 +127,7 @@ class AdminForfaitController extends ModuleAdminController
                     'lang' => true,
                     'rows' => 10,
                     'cols' => 100,
-                    'autoload_rte' => true,
-                    'hint' => $this->l('Caractères Invalides :') . ' <>;=#{}'
+                    'autoload_rte' => true
                 ],
                 [
                     'type' => 'hidden',
@@ -198,29 +197,30 @@ class AdminForfaitController extends ModuleAdminController
             'description' => $_POST['description_' . $language],
         )
         );
-
     }
 
     public function submitEditForfaits()
     {
+            $updated_at = date('Y-m-d H:i:s');
+            $created_at = Db::getInstance()->executeS('SELECT `created_at` FROM `ps_forfaits` WHERE `id_psforfait` ORDER BY `id_psforfait` DESC LIMIT 1');
+            $created_at = $created_at[0]['created_at'];
 
-        $updated_at = date('Y-m-d H:i:s');
-
-        Db::getInstance()->update(Forfaits::$definition['table'], array(
-            'total_time' => $_POST['total_time'],
-            'updated_at' => $updated_at,
-        ), 'id_psforfait = ' . (int) $_POST['id_psforfait']);
-
-        $languages = Language::getLanguages();
-        foreach ($languages as $lang) {
-            $language = $lang['id_lang'];
-        }
-
-        Db::getInstance()->update(Forfaits::$definition['table'] . '_lang', array(
-            'id_lang' => (int) $language,
-            'title' => $_POST['title_' . $language],
-            'description' => $_POST['description_' . $language],
-        ), 'id_psforfait = ' . (int) $_POST['id_psforfait']);
+            Db::getInstance()->update(Forfaits::$definition['table'], array(
+                'total_time' => $_POST['total_time'],
+                'created_at' => $created_at,
+                'updated_at' => $updated_at,
+            ), 'id_psforfait = ' . (int) $_POST['id_psforfait']);
+    
+            $languages = Language::getLanguages();
+            foreach ($languages as $lang) {
+                $language = $lang['id_lang'];
+            }
+    
+            Db::getInstance()->update(Forfaits::$definition['table'] . '_lang', array(
+                'id_lang' => (int) $language,
+                'title' => $_POST['title_' . $language],
+                'description' => $_POST['description_' . $language],
+            ), 'id_psforfait = ' . (int) $_POST['id_psforfait']);
     }
 
     public function initPageHeaderToolbar()
@@ -242,4 +242,13 @@ class AdminForfaitController extends ModuleAdminController
         $title = $db->getValue($query);
         return ($title);
     }
+
+    // public function getForfaitTime($time_max)
+    // {
+    //     $db = Db::getInstance();
+
+    //     $sql = 'SELECT `total_time` FROM `ps_forfaits_lang` WHERE `id_psforfait` = '.$time_max;
+    //     $total_time = $db->getValue($sql);
+    //     return ($total_time);
+    // }
 }
