@@ -192,9 +192,9 @@ class AdminForfaitController extends ModuleAdminController
         }
 
         Db::getInstance()->insert(Forfaits::$definition['table'] . "_lang", array(
-            'id_lang' => $language,
-            'title' => $_POST['title_' . $language],
-            'description' => $_POST['description_' . $language],
+            'id_lang' => (int) $language,
+            'title' => pSQL(['title_' . $language]),
+            'description' => pSQL($_POST['description_' . $language]),
         )
         );
     }

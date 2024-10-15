@@ -289,6 +289,7 @@ class AdminTaskController extends ModuleAdminController
             return;
         }
     }
+
     public function submitEditTasks() {
 
         $updated_at = date('Y-m-d H:i:s');
@@ -322,6 +323,9 @@ class AdminTaskController extends ModuleAdminController
         // $id_tache stock la valeur de la colonne id_pstask
         // $query stock le résultat dans une seule ligne
         $id_psforfait = Db::getInstance()->executeS('SELECT `id_psforfait` FROM `ps_tasks` WHERE `id_pstask` = ' . $id_tache);
+        if (empty($id_psforfait)) {
+            return;
+        }
         $id_psforfait = $id_psforfait[0]['id_psforfait'];
 
         // Je récupère le temps du forfait lié à la tâche 
