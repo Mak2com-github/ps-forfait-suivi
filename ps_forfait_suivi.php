@@ -64,7 +64,8 @@ class Ps_Forfait_Suivi extends Module
     {
         return parent::install() &&
             $this->_installSql() &&
-            $this->_installTab() &&
+            $this->installTab('AdminForfaitController', 'Gestion des forfaits', Tab::getIdFromClassName('AdminParentModules')) &&
+            $this->installTab('AdminTaskController', 'Gestion des tâches', Tab::getIdFromClassName('AdminParentModules')) &&
             $this->registerHook('backOffice') &&
             $this->registerHook('displayBackOfficeHome');
     }
@@ -77,7 +78,8 @@ class Ps_Forfait_Suivi extends Module
     {
         return parent::uninstall() &&
             $this->_uninstallSql() &&
-            $this->_uninstallTab();
+            $this->uninstallTab('AdminForfaitController') &&
+            $this->uninstallTab('AdminTaskController');
     }
 
     protected function _installSql() {
@@ -122,58 +124,53 @@ class Ps_Forfait_Suivi extends Module
     }
 
 
-    protected function _installTab(){
-
-        $tabForfait = new Tab();
-        $tabForfait->class_name = 'AdminForfait';
-        $tabForfait->module = $this->name;
-        $tabForfait->id_parent = (int)Tab::getIdFromClassName('ShopParameters');
-        $tabForfait->icon = 'settings_applications';
-
-        $tabTasks = new Tab();
-        $tabTasks->class_name = 'AdminTask';
-        $tabTasks->module = $this->name;
-        $tabTasks->id_parent = (int)Tab::getIdFromClassName('ShopParameters');
-        $tabTasks->icon = 'settings_applications';
-
-        $languages = Language::getLanguages();
-
-        foreach ($languages as $lang) {
-            $tabForfait->name[$lang['id_lang']] = $this->l('Gestion des forfaits');
-            $tabTasks->name[$lang['id_lang']] = $this->l('Gestion des tâches');
+    private function installTab($class_name, $tab_name, $id_parent)
+    {
+        $tabId = (int) Tab::getIdFromClassName($class_name);
+        if (!$tabId) {
+            $tabId = null;
         }
-        try {
-            $tabForfait->save();
-            $tabTasks->save();
-        } catch (Exception $e) {
-            echo $e->getMessage();
+
+        $tab = new Tab($tabId);
+        $tab->active = 1;
+        $tab->class_name = $class_name;
+        $tab->module = $this->name;
+        $tab->id_parent = $id_parent;
+
+        $tab->name = array();
+        foreach (Language::getLanguages() as $lang) {
+            $tab->name[$lang['id_lang']] = $this->trans($tab_name, array(), 'Modules.PsForfaitSuivi.Admin', $lang['locale']);
+        }
+
+        Logger::addLog('Tentative de création de l\'onglet : ' . $tab_name . ' pour la classe ' . $class_name, 1);
+
+        if (!$tab->save()) {
+            Logger::addLog('Échec de la création de l\'onglet : ' . $tab_name, 3);
             return false;
+        } else {
+            Logger::addLog('Création réussie de l\'onglet : ' . $tab_name, 1);
         }
 
-        return false;
+        return true;
     }
 
-    protected function _uninstallTab() {
-        $idTabForfait = (int)Tab::getIdFromClassName('AdminForfait');
-        $idTabTasks = (int)Tab::getIdFromClassName('AdminTask');
-        if ($idTabForfait) {
-            $tab = new Tab($idTabForfait);
-            try {
-                $tab->delete();
-            } catch (Exception $e) {
-                echo $e->getMessage();
-                return false;
-            }
+
+    private function uninstallTab($class_name)
+    {
+        $tabId = (int) Tab::getIdFromClassName($class_name);
+        if (!$tabId) {
+            return true;
         }
-        if ($idTabTasks) {
-            $tab = new Tab($idTabTasks);
-            try {
-                $tab->delete();
-            } catch (Exception $e) {
-                echo $e->getMessage();
-                return false;
-            }
+
+        $tab = new Tab($tabId);
+
+        if (!$tab->delete()) {
+            Logger::addLog('Échec de la suppression de l\'onglet : ' . $class_name, 3);
+            return false;
+        } else {
+            Logger::addLog('Suppression réussie de l\'onglet : ' . $class_name, 1);
         }
+
         return true;
     }
 
