@@ -39,8 +39,8 @@ class Ps_Forfait_Suivi extends Module
     {
         $this->name = 'ps_forfait_suivi';
         $this->tab = 'administration';
-        $this->version = '1.0.0';
-        $this->author = 'Bob';
+        $this->version = '1.8.1';
+        $this->author = 'Alexandre Celier';
         $this->need_instance = 0;
 
         /**
@@ -82,38 +82,38 @@ class Ps_Forfait_Suivi extends Module
 
     protected function _installSql() {
         $sqlCreateForfaits = "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . Forfaits::$definition['table'] . "` (
-            id_psforfait int(11) unsigned NOT NULL AUTO_INCREMENT,
-            total_time time DEFAULT NULL,
-            created_at datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-            updated_at datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id_psforfait)
-        ) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
+        id_psforfait int(11) unsigned NOT NULL AUTO_INCREMENT,
+        total_time int(11) DEFAULT NULL,
+        created_at datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        updated_at datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_psforfait)
+    ) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
 
         $sqlCreateForfaitsLang = "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . Forfaits::$definition['table'] . "_lang` (
-            id_psforfait int(11) unsigned NOT NULL AUTO_INCREMENT,
-            id_lang int(11) NOT NULL,
-            title varchar(255) DEFAULT NULL,
-            description text DEFAULT NULL,
-            PRIMARY KEY (id_psforfait, id_lang)
-        ) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
+        id_psforfait int(11) unsigned NOT NULL AUTO_INCREMENT,
+        id_lang int(11) NOT NULL,
+        title varchar(255) DEFAULT NULL,
+        description text DEFAULT NULL,
+        PRIMARY KEY (id_psforfait, id_lang)
+    ) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
 
         $sqlCreateTasks = "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . Tasks::$definition['table'] . "` (
-            id_pstask int(11) unsigned NOT NULL AUTO_INCREMENT,
-            id_psforfait int(11) unsigned NOT NULL,
-            total_time time DEFAULT NULL,
-            created_at datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-            updated_at datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id_pstask),
-            FOREIGN KEY (id_psforfait) REFERENCES `". _DB_PREFIX_ . Forfaits::$definition['table']. "`(id_psforfait) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
+        id_pstask int(11) unsigned NOT NULL AUTO_INCREMENT,
+        id_psforfait int(11) unsigned NOT NULL,
+        total_time int(11) DEFAULT NULL,
+        created_at datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        updated_at datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_pstask),
+        FOREIGN KEY (id_psforfait) REFERENCES `" . _DB_PREFIX_ . Forfaits::$definition['table'] . "`(id_psforfait) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
 
         $sqlCreateTasksLang = "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . Tasks::$definition['table'] . "_lang` (
-            id_pstask int(11) unsigned NOT NULL AUTO_INCREMENT,
-            id_lang int(11) NOT NULL,
-            title varchar(255) DEFAULT NULL,
-            description text DEFAULT NULL,
-            PRIMARY KEY (id_pstask, id_lang)
-        ) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
+        id_pstask int(11) unsigned NOT NULL AUTO_INCREMENT,
+        id_lang int(11) NOT NULL,
+        title varchar(255) DEFAULT NULL,
+        description text DEFAULT NULL,
+        PRIMARY KEY (id_pstask, id_lang)
+    ) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
 
         return Db::getInstance()->execute($sqlCreateForfaits) &&
             Db::getInstance()->execute($sqlCreateForfaitsLang) &&

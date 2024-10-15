@@ -155,21 +155,24 @@ class AdminForfaitController extends ModuleAdminController
 
     public function postProcess()
     {
-
-        // If the submit button name is "addForfait"
         if (Tools::isSubmit("addForfait")) {
-            // Then call the function
             $this->submitAddForfait();
         }
-        // If the submit button name is "editForfait"
+
         if (Tools::isSubmit("editForfait")) {
-            // Then call the function
             $this->submitEditForfaits();
         }
-        // If the rout contains "deleteforfaits"
+
         if (Tools::isSubmit('deleteforfaits')) {
-            Db::getInstance()->delete(Forfaits::$definition['table'], 'id_psforfait = ' . $_GET['id_psforfait']);
-            Db::getInstance()->delete(Forfaits::$definition['table'] . '_lang', 'id_psforfait = ' . $_GET['id_psforfait']);
+            $id_forfait = (int)$_GET['id_psforfait'];
+            $taskCount = Db::getInstance()->getValue('SELECT COUNT(*) FROM `ps_tasks` WHERE `id_psforfait` = '.$id_forfait);
+
+            if ($taskCount > 0) {
+                echo '<div class="alert alert-warning">Ce forfait contient des tâches associées. Êtes-vous sûr de vouloir supprimer ce forfait et toutes ses tâches ?</div>';
+            } else {
+                Db::getInstance()->delete(Forfaits::$definition['table'], 'id_psforfait = '.$id_forfait);
+                Db::getInstance()->delete(Forfaits::$definition['table'].'_lang', 'id_psforfait = '.$id_forfait);
+            }
         }
     }
 

@@ -206,7 +206,7 @@ class AdminTaskController extends ModuleAdminController
     }
 
     public function postProcess()
-    {       
+    {
 
         if (Tools::isSubmit("addTask")) {
             $this->submitAddTask();
@@ -222,96 +222,68 @@ class AdminTaskController extends ModuleAdminController
     }
 
     public function submitAddTask() {
-
         $actualTime = date('Y-m-d H:i:s');
 
-        $timeForfait = Db::getInstance()->executeS('SELECT `total_time` FROM `ps_forfaits` WHERE `id_psforfait` ORDER BY `id_psforfait` DESC LIMIT 1');
-        $timeForfait = $timeForfait[0]['total_time'];
-        $tempsF = strtotime($timeForfait); 
+        $timeForfait = Db::getInstance()->getValue('SELECT `total_time` FROM `ps_forfaits` WHERE `id_psforfait` = '.(int)$_POST['id_psforfait']);
 
         $timeTache = $_POST['total_time'];
-        list($heureForfait, $minutesForfait) = explode(':', $timeForfait);
-        $timeForfait = ($heureForfait * 3600) + ($minutesForfait * 60);
 
-        preg_match("/\d{2}:\d{2}/", $timeTache, $matches);
-        list($heureTasks, $minutesTasks) = explode(':', $matches[0]);
-        // echo $heureTasks, $minutesTasks;
-        $timeTache = ($heureTasks * 3600) + ($minutesTasks * 60);
+        if (!preg_match('/^\d{1,2}:\d{2}$/', $_POST['total_time'])) {
+            echo '<div class="alert alert-danger">Le format du temps doit être de type HH:mm.</div>';
+            return;
+        }
 
-        $rest = $timeForfait - $timeTache;
+        $timeRestant = $timeForfait - $timeTache;
 
-        $restHeure = floor($rest / 3600);
-        $restMinutes = floor(($rest % 3600) / 60);
-
-        $time = sprintf('%02d:%02d', $restHeure, $restMinutes);
-        // echo "Temps restant : $time";
-
-        if($timeForfait >= $timeTache) {
+        if ($timeRestant >= 0) {
             Db::getInstance()->insert(Tasks::$definition['table'], array(
                 'id_psforfait' => $_POST['id_psforfait'],
-                'total_time' => $_POST['total_time'],
+                'total_time' => $timeTache,
                 'created_at' => $actualTime,
                 'updated_at' => $actualTime
             ));
-    
-            $languages = Language::getLanguages();
-            foreach ($languages as $lang) {
-                $language = $lang['id_lang'];
-            }
-    
-            Db::getInstance()->insert(Tasks::$definition['table'] . "_lang", array(
-                'id_lang' => $language,
-                'title' => $_POST['title_'. $language],
-                'description' => $_POST['description_'. $language],
-            ));
-    
+
             Db::getInstance()->update(Forfaits::$definition['table'], array(
-                'total_time' => $time,
+                'total_time' => $timeRestant,
                 'updated_at' => $actualTime
-            ), 'id_psforfait = ' . (int)$_POST['id_psforfait']);
+            ), 'id_psforfait = '.(int)$_POST['id_psforfait']);
         } else {
-            echo '<div class="alert alert-danger" 
-                    style=" 
-                    position: absolute;
-                    z-index: 9;
-                    display: flex;
-                    padding: 19px;
-                    background-color: #f2dede;
-                    justify-content: center;
-                    border-color: #eed3d7;
-                    text-align:center;
-                    left: 40%;
-                    top: 30%;
-                    color: #b94a48;">';
-                echo '<strong> Attention! </strong>Le temps de la tâche ne doit pas dépasser le temps du forfait sélectionné.';
-                echo '<a style="cursor: pointer; padding-left: 2em;" data-dismiss="alert" class="close" >×</a>';
-            echo '</div>';
-            return;
+            echo '<div class="alert alert-danger">Le temps de la tâche dépasse le temps restant du forfait.</div>';
         }
     }
 
     public function submitEditTasks() {
-
         $updated_at = date('Y-m-d H:i:s');
-        $created_at = Db::getInstance()->executeS('SELECT `created_at` FROM `ps_forfaits` WHERE `id_psforfait` ORDER BY `id_psforfait` DESC LIMIT 1');
-        $created_at = $created_at[0]['created_at'];
+        $oldTaskTime = Db::getInstance()->getValue('SELECT `total_time` FROM `ps_tasks` WHERE `id_pstask` = '.(int)$_POST['id_pstask']);
+        $newTaskTime = $_POST['total_time'];
 
-        Db::getInstance()->update(Tasks::$definition['table'], array(
-            'total_time' => $_POST['total_time'],
-            'created_at' => $created_at,
-            'updated_at' => $updated_at,
-        ), 'id_pstask = '. (int)$_POST['id_pstask']);
+        // Calcul de la différence de temps
+        $timeDifference = $newTaskTime - $oldTaskTime;
 
-        $languages = Language::getLanguages();
-        foreach ($languages as $lang) {
-            $language = $lang['id_lang'];
+        if (!preg_match('/^\d{1,2}:\d{2}$/', $_POST['total_time'])) {
+            echo '<div class="alert alert-danger">Le format du temps doit être de type HH:mm.</div>';
+            return;
         }
 
-        Db::getInstance()->update(Tasks::$definition['table'] . "_lang", array(
-            'id_lang' => $language,
-            'title' => $_POST['title_' . $language],
-            'description' => $_POST['description_' . $language],
-        ), 'id_pstask = '. (int) $_POST['id_pstask']);
+        // Récupérer le temps actuel du forfait
+        $forfaitTime = Db::getInstance()->getValue('SELECT `total_time` FROM `ps_forfaits` WHERE `id_psforfait` = '.(int)$_POST['id_psforfait']);
+
+        // Mise à jour du temps du forfait
+        $newForfaitTime = $forfaitTime - $timeDifference;
+        if ($newForfaitTime >= 0) {
+            Db::getInstance()->update(Tasks::$definition['table'], array(
+                'total_time' => $newTaskTime,
+                'updated_at' => $updated_at
+            ), 'id_pstask = '.(int)$_POST['id_pstask']);
+
+            Db::getInstance()->update(Forfaits::$definition['table'], array(
+                'total_time' => $newForfaitTime,
+                'updated_at' => $updated_at
+            ), 'id_psforfait = '.(int)$_POST['id_psforfait']);
+        } else {
+            // Message d'erreur si le temps dépasse
+            echo '<div class="alert alert-danger">Le temps modifié dépasse le temps disponible dans le forfait.</div>';
+        }
     }
 
     public function submitDeleteTasks() {
