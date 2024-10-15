@@ -64,8 +64,9 @@ class Ps_Forfait_Suivi extends Module
     {
         return parent::install() &&
             $this->_installSql() &&
-            $this->installTab('AdminForfaitController', 'Gestion des forfaits', Tab::getIdFromClassName('AdminParentModules')) &&
-            $this->installTab('AdminTaskController', 'Gestion des tâches', Tab::getIdFromClassName('AdminParentModules')) &&
+            $this->installTab('AdminParentForfaitTask', 'Gestion des forfaits et des tâches', 0) &&
+            $this->installTab('AdminForfaitController', 'Gestion des forfaits', Tab::getIdFromClassName('AdminParentForfaitTask')) &&
+            $this->installTab('AdminTaskController', 'Gestion des tâches', Tab::getIdFromClassName('AdminParentForfaitTask')) &&
             $this->registerHook('backOffice') &&
             $this->registerHook('displayBackOfficeHome');
     }
@@ -126,32 +127,17 @@ class Ps_Forfait_Suivi extends Module
 
     private function installTab($class_name, $tab_name, $id_parent)
     {
-        $tabId = (int) Tab::getIdFromClassName($class_name);
-        if (!$tabId) {
-            $tabId = null;
-        }
-
-        $tab = new Tab($tabId);
+        $tab = new Tab();
         $tab->active = 1;
         $tab->class_name = $class_name;
-        $tab->module = $this->name;
-        $tab->id_parent = $id_parent;
-
         $tab->name = array();
-        foreach (Language::getLanguages() as $lang) {
-            $tab->name[$lang['id_lang']] = $this->trans($tab_name, array(), 'Modules.PsForfaitSuivi.Admin', $lang['locale']);
+        foreach (Language::getLanguages(true) as $lang) {
+            $tab->name[$lang['id_lang']] = $tab_name;
         }
+        $tab->id_parent = (int)$id_parent;
+        $tab->module = $this->name;
 
-        Logger::addLog('Tentative de création de l\'onglet : ' . $tab_name . ' pour la classe ' . $class_name, 1);
-
-        if (!$tab->save()) {
-            Logger::addLog('Échec de la création de l\'onglet : ' . $tab_name, 3);
-            return false;
-        } else {
-            Logger::addLog('Création réussie de l\'onglet : ' . $tab_name, 1);
-        }
-
-        return true;
+        return $tab->add();
     }
 
 

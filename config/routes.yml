@@ -1,0 +1,13 @@
+admin_forfait:
+  path: /admin-forfait
+  defaults:
+    _controller: 'Module\ps_forfait_suivi\Controller\AdminForfaitController::renderList'
+    _legacy_controller: 'AdminForfaitController'
+  methods: [GET, POST]
+
+admin_task:
+  path: /admin-task
+  defaults:
+    _controller: 'Module\ps_forfait_suivi\Controller\AdminTaskController::renderList'
+    _legacy_controller: 'AdminTaskController'
+  methods: [GET, POST]
