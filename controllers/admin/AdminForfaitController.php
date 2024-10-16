@@ -9,16 +9,14 @@ class AdminForfaitController extends ModuleAdminController
      */
     public function __construct()
     {
-        $this->bootstrap = true; // Manage display in bootstrap mode
-        $this->table = Forfaits::$definition['table']; // Object Table
-        $this->identifier = Forfaits::$definition['primary']; // Object primary key
-        $this->className = Forfaits::class; // Object class
-        $this->lang = true; // Flag for language usa
+        $this->bootstrap = true;
+        $this->table = Forfaits::$definition['table'];
+        $this->identifier = Forfaits::$definition['primary'];
+        $this->className = Forfaits::class;
+        $this->lang = true;
 
-        // Call of the parent function to use traduction
         parent::__construct();
 
-        // List of fields to display
         $this->fields_list = [
             'id_psforfait' => [
                 'title' => $this->module->l('ID'),
@@ -31,8 +29,11 @@ class AdminForfaitController extends ModuleAdminController
                 'align' => 'left',
             ],
             'total_time' => [
-                'title' => $this->module->l('Temps total du forfait'),
+                'title' => $this->module->l('Temps total du forfait (HH:mm)'),
                 'align' => 'center',
+                'callback' => 'displayTotalTime',
+                'callback_object' => 'Forfaits',
+                'search' => false,
             ],
             'description' => [
                 'title' => $this->module->l('Description du forfait'),
@@ -69,18 +70,30 @@ class AdminForfaitController extends ModuleAdminController
         return $fields_list;
     }
 
+    public function renderList()
+    {
+        $forfaits = Db::getInstance()->executeS('SELECT * FROM `' . _DB_PREFIX_ . 'forfaits`');
+
+        foreach ($forfaits as $forfait) {
+            $remainingTime = Forfaits::convertSecondsToTime($forfait['total_time']);
+            if ($forfait['total_time'] === "0") {
+                $this->errors[] = $this->l('Le forfait ' . $forfait['id_psforfait'] . ' est épuisé ! Temps restant : ') . '00:00';
+            } else {
+                $this->confirmations[] = $this->l('Le temps disponible sur le forfait est de ') . $remainingTime;
+            }
+        }
+
+        return parent::renderList();
+    }
+
     public function renderForm()
     {
         $submitName = "addForfait";
 
-        // If the route contains "addforfaits"
         if (Tools::isSubmit("addforfaits")) {
-            // Define the name for the form submit button
             $submitName = "addForfait";
         }
-        // If the route contains "updateforfaits"
         if (Tools::isSubmit("updateforfaits")) {
-            // Define the name for the form submit button
             $submitName = "editForfait";
         }
 
@@ -95,27 +108,22 @@ class AdminForfaitController extends ModuleAdminController
             'input' => [
                 [
                     'type' => 'text',
-                    // Field type
                     'label' => $this->module->l('Titre'),
-                    // Label
                     'name' => 'title',
-                    // Name
                     'class' => 'forfait-title',
-                    // CSS Classes
                     'size' => 255,
-                    // Max field length
                     'required' => true,
-                    // Required or not
                     'empty_message' => $this->module->l('Renseignez le titre du forfait'),
                     'lang' => true,
                     'hint' => $this->module->l('Renseignez le titre du forfait')
                 ],
                 [
-                    'type' => 'datetime',
-                    'label' => $this->module->l('Temps total du forfait'),
+                    'type' => 'text',
+                    'label' => $this->l('Temps total du forfait (HH:mm)'),
                     'name' => 'total_time',
                     'required' => true,
-                    'autoload_rte' => true,
+                    'desc' => $this->l('Entrez le temps au format HH:mm.'),
+                    'hint' => $this->l('Le temps sera converti en secondes pour les calculs.'),
                 ],
                 [
                     'type' => 'textarea',
@@ -149,17 +157,36 @@ class AdminForfaitController extends ModuleAdminController
             ]
         ];
 
-        $this->addJqueryUI('ui.datepicker');
+        if ($this->object->id) {
+            $this->object->total_time = Forfaits::convertSecondsToTime($this->object->total_time);
+        }
+
         return parent::renderForm();
     }
 
     public function postProcess()
     {
         if (Tools::isSubmit("addForfait")) {
+            $total_time = Tools::getValue('total_time');
+
+            if (!preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $total_time)) {
+                $this->errors[] = $this->l('Le format du temps doit être de type HH:mm.');
+                return false;
+            }
+
+            $_POST['total_time'] = Forfaits::convertTimeToSeconds($total_time);
             $this->submitAddForfait();
         }
 
         if (Tools::isSubmit("editForfait")) {
+            $total_time = Tools::getValue('total_time');
+
+            if (!preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $total_time)) {
+                $this->errors[] = $this->l('Le format du temps doit être de type HH:mm.');
+                return false;
+            }
+
+            $_POST['total_time'] = Forfaits::convertTimeToSeconds($total_time);
             $this->submitEditForfaits();
         }
 
@@ -178,7 +205,6 @@ class AdminForfaitController extends ModuleAdminController
 
     public function submitAddForfait()
     {
-
         $created_at = date('Y-m-d H:i:s');
         $updated_at = date('Y-m-d H:i:s');
 
@@ -191,49 +217,59 @@ class AdminForfaitController extends ModuleAdminController
 
         $languages = Language::getLanguages();
         foreach ($languages as $lang) {
-            $language = $lang['id_lang'];
+            $language = (int) $lang['id_lang'];
+            Db::getInstance()->insert(Forfaits::$definition['table'] . "_lang", array(
+                'id_psforfait' => (int) Db::getInstance()->Insert_ID(),
+                'id_lang' => $language,
+                'title' => pSQL($_POST['title_' . $language]),
+                'description' => pSQL($_POST['description_' . $language]),
+            ));
         }
-
-        Db::getInstance()->insert(Forfaits::$definition['table'] . "_lang", array(
-            'id_lang' => (int) $language,
-            'title' => pSQL(['title_' . $language]),
-            'description' => pSQL($_POST['description_' . $language]),
-        )
-        );
     }
 
     public function submitEditForfaits()
     {
-            $updated_at = date('Y-m-d H:i:s');
-            $created_at = Db::getInstance()->executeS('SELECT `created_at` FROM `ps_forfaits` WHERE `id_psforfait` ORDER BY `id_psforfait` DESC LIMIT 1');
-            $created_at = $created_at[0]['created_at'];
+        $updated_at = date('Y-m-d H:i:s');
 
-            Db::getInstance()->update(Forfaits::$definition['table'], array(
-                'total_time' => $_POST['total_time'],
-                'created_at' => $created_at,
-                'updated_at' => $updated_at,
-            ), 'id_psforfait = ' . (int) $_POST['id_psforfait']);
-    
-            $languages = Language::getLanguages();
-            foreach ($languages as $lang) {
-                $language = $lang['id_lang'];
-            }
-    
+        $oldTotalTime = Db::getInstance()->getValue('SELECT `total_time` FROM `ps_forfaits` WHERE `id_psforfait` = ' . (int)$_POST['id_psforfait']);
+
+        $newTotalTime = (int)$_POST['total_time'];
+
+        Db::getInstance()->update(Forfaits::$definition['table'], array(
+            'total_time' => $newTotalTime,
+            'updated_at' => $updated_at,
+        ), 'id_psforfait = ' . (int) $_POST['id_psforfait']);
+
+        $languages = Language::getLanguages();
+        foreach ($languages as $lang) {
+            $language = (int) $lang['id_lang'];
             Db::getInstance()->update(Forfaits::$definition['table'] . '_lang', array(
-                'id_lang' => (int) $language,
-                'title' => $_POST['title_' . $language],
-                'description' => $_POST['description_' . $language],
-            ), 'id_psforfait = ' . (int) $_POST['id_psforfait']);
+                'title' => pSQL($_POST['title_' . $language]),
+                'description' => pSQL($_POST['description_' . $language]),
+            ), 'id_psforfait = '.(int)$_POST['id_psforfait']);
+        }
+
+        if ($oldTotalTime != $newTotalTime) {
+            Db::getInstance()->update(Tasks::$definition['table'], array(
+                'current' => 0
+            ), 'id_psforfait = ' . (int)$_POST['id_psforfait'] . ' AND current = 1');
+
+            $this->confirmations[] = $this->l('Le total_time a été modifié. Toutes les tâches associées à ce forfait ont été déattribuées.');
+        }
     }
 
     public function initPageHeaderToolbar()
     {
-        // Add Button
-        $this->page_header_toolbar_btn['Nouveau'] = array(
-            'href' => self::$currentIndex . '&add' . $this->table . '&token=' . $this->token,
-            'desc' => $this->module->l('Ajout nouveau forfait'),
-            'icon' => 'process-icon-new'
-        );
+        $forfaitCount = Db::getInstance()->getValue('SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'forfaits`');
+
+        if ($forfaitCount == 0) {
+            $this->page_header_toolbar_btn['Nouveau'] = array(
+                'href' => self::$currentIndex . '&add' . $this->table . '&token=' . $this->token,
+                'desc' => $this->module->l('Ajout nouveau forfait'),
+                'icon' => 'process-icon-new'
+            );
+        }
+
         parent::initPageHeaderToolbar();
     }
     
@@ -241,17 +277,18 @@ class AdminForfaitController extends ModuleAdminController
     {
         $db = Db::getInstance();
 
-        $query = 'SELECT `title` FROM `ps_forfaits_lang` WHERE `id_psforfait` = '.$id_forfait;
+        $query = 'SELECT `title` FROM `ps_forfaits_lang` WHERE `id_psforfait` = '. $id_forfait;
         $title = $db->getValue($query);
+        var_dump($title);
         return ($title);
     }
 
-    // public function getForfaitTime($time_max)
-    // {
-    //     $db = Db::getInstance();
+     public function getForfaitTime($time_max)
+     {
+         $db = Db::getInstance();
 
-    //     $sql = 'SELECT `total_time` FROM `ps_forfaits_lang` WHERE `id_psforfait` = '.$time_max;
-    //     $total_time = $db->getValue($sql);
-    //     return ($total_time);
-    // }
+         $sql = 'SELECT `total_time` FROM `ps_forfaits_lang` WHERE `id_psforfait` = '.$time_max;
+         $total_time = $db->getValue($sql);
+         return ($total_time);
+     }
 }

@@ -65,10 +65,11 @@ class Ps_Forfait_Suivi extends Module
         return parent::install() &&
             $this->_installSql() &&
             $this->installTab('AdminParentForfaitTask', 'Gestion des forfaits et des tâches', 0) &&
-            $this->installTab('AdminForfaitController', 'Gestion des forfaits', Tab::getIdFromClassName('AdminParentForfaitTask')) &&
-            $this->installTab('AdminTaskController', 'Gestion des tâches', Tab::getIdFromClassName('AdminParentForfaitTask')) &&
+            $this->installTab('AdminForfait', 'Gestion des forfaits', Tab::getIdFromClassName('AdminParentForfaitTask')) &&
+            $this->installTab('AdminTask', 'Gestion des tâches', Tab::getIdFromClassName('AdminParentForfaitTask')) &&
             $this->registerHook('backOffice') &&
-            $this->registerHook('displayBackOfficeHome');
+            $this->registerHook('displayBackOfficeHome') &&
+            $this->registerHook('actionAdminControllerSetMedia');
     }
 
     /**
@@ -104,6 +105,7 @@ class Ps_Forfait_Suivi extends Module
         id_pstask int(11) unsigned NOT NULL AUTO_INCREMENT,
         id_psforfait int(11) unsigned NOT NULL,
         total_time int(11) DEFAULT NULL,
+        current TINYINT(1) DEFAULT 1,
         created_at datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
         updated_at datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id_pstask),
@@ -165,5 +167,14 @@ class Ps_Forfait_Suivi extends Module
         $sql = "DROP TABLE IF EXISTS ". _DB_PREFIX_ . Tasks::$definition['table'] ."_lang,". _DB_PREFIX_ . Tasks::$definition['table'] .", ". _DB_PREFIX_ . Forfaits::$definition['table'] ."_lang,". _DB_PREFIX_ . Forfaits::$definition['table'] .";";
         return Db::getInstance()->execute($sql);
     }
+
+//    public function hookActionAdminControllerSetMedia($params)
+//    {
+//        if (Tools::getValue('controller') == 'AdminForfaitController' || Tools::getValue('controller') == 'AdminTaskController') {
+//            $this->context->controller->addJS(_MODULE_DIR_.$this->name.'/views/js/timepicker-init.js');
+//            $this->context->controller->addJS(_PS_JS_DIR_.'jquery/plugins/timepicker/jquery.timepicker.min.js');
+//            $this->context->controller->addCSS(_PS_JS_DIR_.'jquery/plugins/timepicker/jquery.timepicker.css');
+//        }
+//    }
 }
 
