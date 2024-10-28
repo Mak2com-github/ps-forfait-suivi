@@ -88,6 +88,7 @@ class AdminForfaitController extends ModuleAdminController
 
     public function renderForm()
     {
+        $this->addJS(_MODULE_DIR_ . 'ps_forfait_suivi/views/js/task-time-input.js');
         $submitName = "addForfait";
 
         if (Tools::isSubmit("addforfaits")) {

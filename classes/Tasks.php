@@ -43,12 +43,14 @@ class Tasks extends ObjectModel
             LEFT JOIN ' . _DB_PREFIX_ . 'tasks_lang tl 
                 ON (t.id_pstask = tl.id_pstask AND tl.id_lang = ' . $id_lang . ')
             LEFT JOIN ' . _DB_PREFIX_ . 'tasks_lang tld 
-                ON (t.id_pstask = tld.id_pstask AND tld.id_lang = ' . (int)$default_lang . ')';
+                ON (t.id_pstask = tld.id_pstask AND tld.id_lang = ' . (int)$default_lang . ')
+            ORDER BY t.created_at DESC';
 
         $tasks = Db::getInstance()->executeS($sql);
 
         return is_array($tasks) ? $tasks : [];
     }
+
 
     public static function isTimeFormat($time)
     {
